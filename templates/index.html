@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Dashboard - Stock Signals</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 25px 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            color: #333;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-top: 8px;
+            font-size: 14px;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .stat-card {
+            background: #f5f5f5;
+            padding: 10px 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .controls {
+            background: white;
+            border-radius: 15px;
+            padding: 15px 20px;
+            margin-bottom: 25px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+        
+        .btn-market {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+        
+        .btn-market.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .search-box {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            max-width: 300px;
+        }
+        
+        .refresh-info {
+            margin-left: auto;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            overflow-x: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #4a5568;
+            border-bottom: 2px solid #e2e8f0;
+            cursor: pointer;
+        }
+        
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        tr:hover {
+            background: #f7fafc;
+        }
+        
+        .ticker {
+            font-weight: bold;
+            color: #2d3748;
+        }
+        
+        .price {
+            font-weight: 600;
+        }
+        
+        .positive {
+            color: #48bb78;
+        }
+        
+        .negative {
+            color: #f56565;
+        }
+        
+        .signal-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .strong-buy {
+            background: #fbbf24;
+            color: #78350f;
+        }
+        
+        .buy {
+            background: #48bb78;
+            color: white;
+        }
+        
+        .sell {
+            background: #f56565;
+            color: white;
+        }
+        
+        .hold {
+            background: #a0aec0;
+            color: white;
+        }
+        
+        .score {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            text-align: center;
+            border-radius: 50%;
+            font-weight: bold;
+        }
+        
+        .score-high {
+            background: #48bb78;
+            color: white;
+        }
+        
+        .score-medium {
+            background: #fbbf24;
+            color: #78350f;
+        }
+        
+        .score-low {
+            background: #a0aec0;
+            color: white;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            max-width: 800px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .close {
+            cursor: pointer;
+            font-size: 24px;
+            color: #666;
+        }
+        
+        .chart-container {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        canvas {
+            max-width: 100%;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: white;
+            font-size: 18px;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            .header {
+                padding: 15px;
+            }
+            h1 {
+                font-size: 20px;
+            }
+            th, td {
+                padding: 8px 10px;
+                font-size: 12px;
+            }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>
+                📈 Trading Signal Dashboard
+                <span style="font-size: 14px; background: #667eea; color: white; padding: 2px 8px; border-radius: 20px;">LIVE</span>
+            </h1>
+            <div class="subtitle">Real-time stock analysis based on moving averages & RSI</div>
+            <div class="stats" id="stats">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalStocks">-</div>
+                    <div class="stat-label">Total Stocks</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="strongBuys">-</div>
+                    <div class="stat-label">Strong Buys</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="buys">-</div>
+                    <div class="stat-label">Buys</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="sells">-</div>
+                    <div class="stat-label">Sells</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="btn btn-market active" data-market="all">🌎 All Markets</button>
+            <button class="btn btn-market" data-market="us">🇺🇸 US Stocks</button>
+            <button class="btn btn-market" data-market="canada">🇨🇦 Canadian Stocks</button>
+            <button class="btn btn-primary" onclick="refreshData()">🔄 Refresh</button>
+            <input type="text" class="search-box" placeholder="Search ticker..." id="searchInput">
+            <div class="refresh-info" id="timestamp"></div>
+        </div>
+        
+        <div class="table-container">
+            <table id="stockTable">
+                <thead>
+                    <tr>
+                        <th onclick="sortTable('ticker')">Ticker ↕</th>
+                        <th>Name</th>
+                        <th onclick="sortTable('price')">Price ↕</th>
+                        <th onclick="sortTable('sma20')">SMA20 ↕</th>
+                        <th onclick="sortTable('sma50')">SMA50 ↕</th>
+                        <th onclick="sortTable('rsi')">RSI ↕</th>
+                        <th onclick="sortTable('score')">Score ↕</th>
+                        <th>Signal</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr><td colspan="9" class="loading">Loading stocks...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Stock Details</h2>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div id="modalBody"></div>
+            <div class="chart-container">
+                <canvas id="priceChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentStocks = [];
+        let sortColumn = 'score';
+        let sortDirection = 'desc';
+        let currentMarket = 'all';
+        let priceChart = null;
+        
+        async function fetchStocks() {
+            const response = await fetch(`/api/stocks?market=${currentMarket}`);
+            const data = await response.json();
+            currentStocks = data.stocks;
+            updateStats(data);
+            renderTable();
+            document.getElementById('timestamp').innerHTML = `Last updated: ${data.timestamp}`;
+        }
+        
+        function updateStats(data) {
+            const stocks = data.stocks;
+            const strongBuys = stocks.filter(s => s.signal === 'STRONG BUY').length;
+            const buys = stocks.filter(s => s.signal === 'BUY').length;
+            const sells = stocks.filter(s => s.signal === 'SELL').length;
+            document.getElementById('totalStocks').innerHTML = data.total;
+            document.getElementById('strongBuys').innerHTML = strongBuys;
+            document.getElementById('buys').innerHTML = buys;
+            document.getElementById('sells').innerHTML = sells;
+        }
+        
+        function renderTable() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            let filtered = currentStocks.filter(s => 
+                s.ticker.toLowerCase().includes(searchTerm) || 
+                s.name.toLowerCase().includes(searchTerm)
+            );
+            filtered.sort((a, b) => {
+                let aVal = a[sortColumn];
+                let bVal = b[sortColumn];
+                if (sortColumn === 'ticker') {
+                    aVal = a.ticker;
+                    bVal = b.ticker;
+                }
+                if (sortDirection === 'asc') {
+                    return aVal > bVal ? 1 : -1;
+                } else {
+                    return aVal < bVal ? 1 : -1;
+                }
+            });
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            filtered.forEach(stock => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td class="ticker">${stock.ticker}</td>
+                    <td>${stock.name}</td>
+                    <td class="price">$${stock.price}</td>
+                    <td>$${stock.sma20}</td>
+                    <td>$${stock.sma50}</td>
+                    <td class="${stock.rsi < 30 ? 'positive' : (stock.rsi > 70 ? 'negative' : '')}">${stock.rsi}</td>
+                    <td><span class="score score-${stock.score >= 3 ? 'high' : (stock.score >= 2 ? 'medium' : 'low')}">${stock.score}</span></td>
+                    <td><span class="signal-badge ${stock.signal_class}">${stock.emoji} ${stock.signal}</span></td>
+                    <td><button class="btn btn-primary" onclick="showDetails('${stock.ticker}')">Details</button></td>
+                `;
+            });
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="loading">No stocks found</td></tr>';
+            }
+        }
+        
+        async function showDetails(ticker) {
+            const response = await fetch(`/api/stock/${ticker}`);
+            const stock = await response.json();
+            document.getElementById('modalTitle').innerHTML = `${stock.ticker} - ${stock.name}`;
+            document.getElementById('modalBody').innerHTML = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div><strong>Current Price:</strong> $${stock.price}</div>
+                    <div><strong>SMA20:</strong> $${stock.sma20}</div>
+                    <div><strong>SMA50:</strong> $${stock.sma50}</div>
+                    <div><strong>RSI:</strong> ${stock.rsi}</div>
+                    <div><strong>Score:</strong> ${stock.score}/4</div>
+                    <div><strong>Signal:</strong> ${stock.emoji} ${stock.signal}</div>
+                </div>
+                <div style="margin-top: 15px; padding: 10px; background: #f5f5f5; border-radius: 8px;">
+                    <strong>💡 What this means:</strong><br>
+                    ${stock.signal === 'STRONG BUY' ? 'Strong upward momentum. Price above both moving averages with golden cross pattern.' :
+                      stock.signal === 'BUY' ? 'Positive trend. Consider entering a position with proper risk management.' :
+                      stock.signal === 'SELL' ? 'Downward trend. Consider taking profits or staying out.' :
+                      'Mixed signals. Wait for clearer direction.'}
+                </div>
+            `;
+            if (stock.history && stock.history.prices) {
+                if (priceChart) priceChart.destroy();
+                const ctx = document.getElementById('priceChart').getContext('2d');
+                priceChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: stock.history.dates,
+                        datasets: [{
+                            label: 'Closing Price',
+                            data: stock.history.prices,
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: { responsive: true, plugins: { legend: { position: 'top' }, title: { display: true, text: '30-Day Price History' } } }
+                });
+            }
+            document.getElementById('modal').style.display = 'flex';
+        }
+        
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+        
+        async function refreshData() {
+            document.getElementById('tableBody').innerHTML = '<tr><td colspan="9" class="loading">Refreshing...</td></tr>';
+            await fetchStocks();
+        }
+        
+        function sortTable(column) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'desc';
+            }
+            renderTable();
+        }
+        
+        document.querySelectorAll('.btn-market').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                document.querySelectorAll('.btn-market').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentMarket = btn.dataset.market;
+                await refreshData();
+            });
+        });
+        
+        document.getElementById('searchInput').addEventListener('input', renderTable);
+        setInterval(refreshData, 60000);
+        fetchStocks();
+    </script>
+</body>
+</html>
